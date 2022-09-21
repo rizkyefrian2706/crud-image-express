@@ -26,15 +26,18 @@ const show = async (req, res) => {
 }
 
 const create = async (req, res) => {
-    req.body.gambar = req.files.gambar[0].path;
-
+    if (req.files.gambar == undefined) {
+        req.body.gambar = "/images/default.jpg";
+    } else { 
+        req.body.gambar = "/images/"+ req.files.gambar[0].filename;
+    }
     let data = {
         username: req.body.username,
         email: req.body.email,
         password: req.body.password,
         level: req.body.level,
         img: req.body.gambar
-    }
+    } 
     await user.create(data)
         .then(data => {
             res.status(200).send(data)
@@ -51,12 +54,16 @@ const update = async (req, res) => {
 
     let id = req.params.id
     const dataImage = await user.findOne({ where: { id } })
-    let gambar = dataImage.dataValues.img; 
-    req.body.img = req.files.gambar[0].path;
+    let gambar = dataImage.dataValues.img;
+    if (req.files.gambar != undefined) {
+        req.body.img = req.files.gambar[0].path;
+    }
     await user.update(req.body, { where: { id: id } })
-         .then(data => { 
-            if(gambar != null){
-                removeImage(gambar)
+        .then(data => {
+            if (gambar != null) {
+                if (req.files.gambar != undefined) {
+                    removeImage(gambar)
+                }
             }
             res.status(200).json(data)
         })
@@ -65,18 +72,18 @@ const update = async (req, res) => {
                 message: 'internal server error',
                 dataError: err
             })
-        }) 
+        })
 }
 
 const destroy = async (req, res) => {
 
     let id = req.params.id
     const dataImage = await user.findOne({ where: { id } })
-    let gambar = dataImage.dataValues.img;  
+    let gambar = dataImage.dataValues.img;
 
     await user.destroy({ where: { id: id } })
-        .then(data => { 
-            if(gambar != null){
+        .then(data => {
+            if (gambar != null) {
                 removeImage(gambar)
             }
             res.status(200).json({ msg: "success" });
